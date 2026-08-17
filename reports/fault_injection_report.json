@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "overall": "FAIL"
+  },
+  "results": [
+    {
+      "id": 1,
+      "scenario": "Sensor Disconnect",
+      "injected_fault": "Pressure sensor disconnected",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 2,
+      "scenario": "Sensor Invalid / Out of Range",
+      "injected_fault": "Sensor value forced beyond 0..200 bar",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 3,
+      "scenario": "Sensor Frozen",
+      "injected_fault": "Sensor output frozen while process pressure changes",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 4,
+      "scenario": "Valve Fails to Close",
+      "injected_fault": "Valve actuator prevented from reaching CLOSED",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": false,
+      "fault_detected": true,
+      "passed": false,
+      "evidence": "12:04:33  Filling started | 12:04:33  FAULT: Valve failed to reach CLOSED safe position | 12:04:33  Safety shutdown requested: Emergency stop activated | 12:04:33  System LOCKED - VALVE NOT VERIFIED CLOSED"
+    },
+    {
+      "id": 5,
+      "scenario": "Valve Feedback Failure",
+      "injected_fault": "Valve feedback forced inconsistent with physical close",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": false,
+      "fault_detected": true,
+      "passed": false,
+      "evidence": "12:04:33  Filling started | 12:04:33  FAULT: Valve failed to reach CLOSED safe position | 12:04:33  Safety shutdown requested: Emergency stop activated | 12:04:33  System LOCKED - VALVE NOT VERIFIED CLOSED"
+    },
+    {
+      "id": 6,
+      "scenario": "Emergency Stop",
+      "injected_fault": "Emergency-stop input activated",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Emergency stop activated | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 7,
+      "scenario": "Power Failure",
+      "injected_fault": "Power availability removed",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Power failure - filling disabled | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 8,
+      "scenario": "Controller / Watchdog Failure",
+      "injected_fault": "Controller watchdog expired",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Watchdog failure - filling disabled | 12:04:33  System LOCKED"
+    },
+    {
+      "id": 9,
+      "scenario": "Overpressure",
+      "injected_fault": "Pressure forced to emergency threshold (125.0 bar)",
+      "expected_state": "LOCK",
+      "actual_state": "LOCK",
+      "expected_valve_closed": true,
+      "actual_valve_closed": true,
+      "fault_detected": true,
+      "passed": true,
+      "evidence": "12:04:33  Filling started | 12:04:33  Emergency shutdown: 125.0 bar | 12:04:33  System LOCKED | 12:04:33  System LOCKED"
+    }
+  ]
+}
