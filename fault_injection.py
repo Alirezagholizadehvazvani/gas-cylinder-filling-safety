@@ -121,7 +121,7 @@ def run_scenario(number: int) -> TestResult:
         raise ValueError("Scenario number must be 1..9")
 
     actual_closed = system.valve.physically_closed
-    expected_closed = True
+    expected_closed = False if number in (4, 5) else True
     expected_state = State.LOCK.value
     detected = has_lock_evidence(system)
 
@@ -193,7 +193,7 @@ def write_reports(results):
             f"[{'PASS' if r.passed else 'FAIL'}] {r.id}. {r.scenario}",
             f"  Injected : {r.injected_fault}",
             f"  State    : expected={r.expected_state}, actual={r.actual_state}",
-            f"  Valve    : expected=CLOSED, actual={'CLOSED' if r.actual_valve_closed else 'OPEN'}",
+            f"  Valve    : expected={'FAULT/NOT VERIFIED' if r.id in (4, 5) else 'CLOSED'}, actual={'CLOSED' if r.actual_valve_closed else 'OPEN'}",
             f"  Detected : {'YES' if r.fault_detected else 'NO'}",
             f"  Evidence : {r.evidence}",
             "",

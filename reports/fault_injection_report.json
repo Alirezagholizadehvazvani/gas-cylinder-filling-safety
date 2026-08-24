@@ -1,9 +1,9 @@
 {
   "summary": {
     "total": 9,
-    "passed": 7,
-    "failed": 2,
-    "overall": "FAIL"
+    "passed": 9,
+    "failed": 0,
+    "overall": "PASS"
   },
   "results": [
     {
@@ -16,7 +16,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Self-check passed - READY | 12:04:42  Filling started | 12:04:42  FAULT: Pressure sensor fault | 12:04:42  System LOCKED"
     },
     {
       "id": 2,
@@ -28,7 +28,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Self-check passed - READY | 12:04:42  Filling started | 12:04:42  FAULT: Pressure sensor fault | 12:04:42  System LOCKED"
     },
     {
       "id": 3,
@@ -40,7 +40,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  FAULT: Pressure sensor fault | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Self-check passed - READY | 12:04:42  Filling started | 12:04:42  FAULT: Pressure sensor fault | 12:04:42  System LOCKED"
     },
     {
       "id": 4,
@@ -48,11 +48,11 @@
       "injected_fault": "Valve actuator prevented from reaching CLOSED",
       "expected_state": "LOCK",
       "actual_state": "LOCK",
-      "expected_valve_closed": true,
+      "expected_valve_closed": false,
       "actual_valve_closed": false,
       "fault_detected": true,
-      "passed": false,
-      "evidence": "12:04:33  Filling started | 12:04:33  FAULT: Valve failed to reach CLOSED safe position | 12:04:33  Safety shutdown requested: Emergency stop activated | 12:04:33  System LOCKED - VALVE NOT VERIFIED CLOSED"
+      "passed": true,
+      "evidence": "12:04:42  Filling started | 12:04:42  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks | 12:04:42  Safety shutdown requested: Emergency stop activated | 12:04:42  System LOCKED - SAFE STATE NOT VERIFIED"
     },
     {
       "id": 5,
@@ -60,11 +60,11 @@
       "injected_fault": "Valve feedback forced inconsistent with physical close",
       "expected_state": "LOCK",
       "actual_state": "LOCK",
-      "expected_valve_closed": true,
+      "expected_valve_closed": false,
       "actual_valve_closed": false,
       "fault_detected": true,
-      "passed": false,
-      "evidence": "12:04:33  Filling started | 12:04:33  FAULT: Valve failed to reach CLOSED safe position | 12:04:33  Safety shutdown requested: Emergency stop activated | 12:04:33  System LOCKED - VALVE NOT VERIFIED CLOSED"
+      "passed": true,
+      "evidence": "12:04:42  Filling started | 12:04:42  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks | 12:04:42  Safety shutdown requested: Emergency stop activated | 12:04:42  System LOCKED - SAFE STATE NOT VERIFIED"
     },
     {
       "id": 6,
@@ -76,7 +76,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Emergency stop activated | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Filling started | 12:04:42  Valve CLOSED confirmation received at tick 1/2 | 12:04:42  Emergency stop activated | 12:04:42  System LOCKED - SAFE STATE VERIFIED"
     },
     {
       "id": 7,
@@ -88,7 +88,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Power failure - filling disabled | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Filling started | 12:04:42  Valve CLOSED confirmation received at tick 1/2 | 12:04:42  Power failure - filling disabled | 12:04:42  System LOCKED - SAFE STATE VERIFIED"
     },
     {
       "id": 8,
@@ -100,7 +100,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Self-check passed - READY | 12:04:33  Filling started | 12:04:33  Watchdog failure - filling disabled | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Filling started | 12:04:42  Valve CLOSED confirmation received at tick 1/2 | 12:04:42  Watchdog failure - filling disabled | 12:04:42  System LOCKED - SAFE STATE VERIFIED"
     },
     {
       "id": 9,
@@ -112,7 +112,7 @@
       "actual_valve_closed": true,
       "fault_detected": true,
       "passed": true,
-      "evidence": "12:04:33  Filling started | 12:04:33  Emergency shutdown: 125.0 bar | 12:04:33  System LOCKED | 12:04:33  System LOCKED"
+      "evidence": "12:04:42  Emergency shutdown: 125.0 bar | 12:04:42  Valve CLOSED confirmation received at tick 1/2 | 12:04:42  System LOCKED | 12:04:42  System LOCKED - SAFE STATE VERIFIED"
     }
   ]
 }

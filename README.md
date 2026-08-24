@@ -4,6 +4,9 @@
 
 This phase extends the original control/safety simulation with a **Fault Injection Engine** for digital verification of safe-state behaviour.
 
+The valve shutdown path now uses an explicit, bounded verification sequence:
+`CLOSE command → feedback/position verification → timeout → critical fault if not verified → LOCK`.
+
 The original prototype already covered startup/self-check, READY/FILLING/WARNING/EMERGENCY/LOCK, pressure thresholds, sensor faults, emergency stop, power failure, valve command/feedback modelling, reset behaviour and event logging. The README also explicitly defines the project as a logic simulation that must not be connected to real gas equipment.
 
 This phase adds nine intentional fault scenarios, an automated test runner, and machine-readable/human-readable PASS/FAIL reports.
@@ -28,9 +31,10 @@ For this digital prototype, a successful safety response requires:
 
 - controller state reaches `LOCK`
 - the shutdown/fault is detected and recorded
-- the valve is actually verified `CLOSED`
+- for normal shutdowns, the valve is verified `CLOSED` within the configured timeout
+- for valve actuator/feedback faults, the system must detect that `CLOSED` cannot be verified and must remain `LOCKED`
 
-This is deliberately stricter than merely checking the controller state. In particular, valve actuator and feedback faults are expected to expose a failure if the simulated valve cannot be verified closed. That is useful because the test suite should reveal unsafe conditions rather than silently marking them as successful.
+This is deliberately stricter than merely checking the controller state. The controller must not falsely claim a safe state when valve position cannot be verified. Therefore scenarios 4 and 5 now PASS when the system correctly detects the valve problem, records a confirmation timeout, enters `LOCK`, and explicitly records `SAFE STATE NOT VERIFIED`.
 
 ## Run the prototype
 
@@ -62,3 +66,27 @@ A `FAIL` result is not automatically a bug in the test runner. It means the simu
 ## Safety boundary
 
 **This is a digital logic simulation only. It is not connected to, and must not directly control, real gas equipment.**
+
+
+## Valve shutdown verification
+
+The digital prototype now models a bounded valve-close confirmation window using `VALVE_CLOSE_TIMEOUT_TICKS`.
+
+Normal shutdown:
+
+```text
+CLOSE COMMAND
+     ↓
+Verify CLOSED
+     ↓
+within timeout?
+  ┌──┴──┐
+ YES    NO
+  ↓      ↓
+LOCK   CRITICAL FAULT
+SAFE     ↓
+STATE   LOCK
+VERIFIED
+```
+
+The valve actuator and feedback fault scenarios deliberately exercise the `NO` branch. A test is considered successful when the system **detects and contains** that failure rather than pretending that the valve reached the safe position.

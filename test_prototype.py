@@ -78,7 +78,8 @@ class SafetySystemTests(unittest.TestCase):
         system.update()
         self.assertEqual(system.state, State.LOCK)
         self.assertFalse(system.valve.physically_closed)
-        self.assertIn("Valve failed", "\n".join(system.events))
+        self.assertIn("CLOSED confirmation timeout", "\n".join(system.events))
+        self.assertIn("SAFE STATE NOT VERIFIED", "\n".join(system.events))
 
     def test_valve_feedback_failure_is_exposed(self):
         system = self.running_system()
@@ -87,6 +88,7 @@ class SafetySystemTests(unittest.TestCase):
         system.update()
         self.assertEqual(system.state, State.LOCK)
         self.assertFalse(system.valve.physically_closed)
+        self.assertIn("SAFE STATE NOT VERIFIED", "\n".join(system.events))
 
     def test_fault_injection_engine_has_nine_scenarios(self):
         results = run_all_scenarios()

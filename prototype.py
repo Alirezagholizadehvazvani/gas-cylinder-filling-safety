@@ -6,6 +6,7 @@ WARNING_PRESSURE = 120.0
 EMERGENCY_PRESSURE = 125.0
 MAX_SENSOR_PRESSURE = 200.0
 FROZEN_SENSOR_TICKS = 2
+VALVE_CLOSE_TIMEOUT_TICKS = 2
 
 
 class State(Enum):
@@ -131,7 +132,8 @@ class SafetySystem:
         elif not self.sensor.healthy():
             self.lock("Pressure sensor fault")
         else:
-            self.valve.close()
+            if not self.valve.physically_closed:
+                self.valve.close()
             if not self.valve.physically_closed:
                 self.lock("Valve failed to close during self-check")
                 return
@@ -204,20 +206,39 @@ class SafetySystem:
         else:
             self.state = State.FILLING
 
-    def _safe_shutdown(self, reason):
+    def _verify_valve_closed(self, reason):
+        """
+        Simulate a bounded-time valve-close confirmation.
+
+        A safe shutdown is successful only when the valve can be verified
+        CLOSED before the timeout. If it cannot, the controller remains
+        LOCKED and records a critical valve-position fault. Restart is
+        therefore impossible until the underlying fault is removed and a
+        subsequent self-check succeeds.
+        """
         self.valve.close()
 
-        if not self.valve.physically_closed:
-            self.log("FAULT: Valve failed to reach CLOSED safe position")
-            self.state = State.LOCK
-            self.log(f"Safety shutdown requested: {reason}")
-            self.log("System LOCKED - VALVE NOT VERIFIED CLOSED")
-            return False
+        for tick in range(1, VALVE_CLOSE_TIMEOUT_TICKS + 1):
+            if self.valve.physically_closed:
+                self.log(
+                    f"Valve CLOSED confirmation received at tick {tick}/{VALVE_CLOSE_TIMEOUT_TICKS}"
+                )
+                self.state = State.LOCK
+                self.log(reason)
+                self.log("System LOCKED - SAFE STATE VERIFIED")
+                return True
 
         self.state = State.LOCK
-        self.log(reason)
-        self.log("System LOCKED")
-        return True
+        self.log(
+            f"CRITICAL FAULT: Valve CLOSED confirmation timeout "
+            f"after {VALVE_CLOSE_TIMEOUT_TICKS} ticks"
+        )
+        self.log(f"Safety shutdown requested: {reason}")
+        self.log("System LOCKED - SAFE STATE NOT VERIFIED")
+        return False
+
+    def _safe_shutdown(self, reason):
+        return self._verify_valve_closed(reason)
 
     def emergency_shutdown(self, pressure):
         self.state = State.EMERGENCY
