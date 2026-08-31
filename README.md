@@ -90,3 +90,14 @@ VERIFIED
 ```
 
 The valve actuator and feedback fault scenarios deliberately exercise the `NO` branch. A test is considered successful when the system **detects and contains** that failure rather than pretending that the valve reached the safe position.
+
+## Fixes in this revision
+
+| Area | Problem | Fix |
+|---|---|---|
+| Reset | `self_check()` verified sensor health but not the pressure value, so reset after an overpressure lock could return to READY, and a following `start()` would reopen the valve, while pressure was still at/above 125 bar. | `self_check()` now also rejects reset while pressure is at or above `WARNING_PRESSURE`. |
+| E-stop | `emergency_stop()` had no re-entry guard, unlike `power_failure()` and `watchdog_failure()`. Holding E-stop across multiple `update()` ticks re-ran the shutdown and duplicated log lines every tick. | Added the same `if self.state != State.LOCK` guard used by the other two fault handlers. |
+| Logging | `emergency_shutdown()` passed the literal string `"System LOCKED"` as the shutdown reason, which collided with `_verify_valve_closed()`'s own confirmation line and produced a redundant duplicate entry in the log. | Reason changed to `"Emergency shutdown - filling disabled"`, consistent with how the other shutdown paths name their reason. |
+| Valve monitoring | Command/feedback mismatch was only checked when a CLOSE was issued. A valve that silently reported the wrong feedback while FILLING or WARNING was not caught. | `Valve.matches_command` checked every tick while FILLING/WARNING; a mismatch now locks immediately. |
+
+Five regression tests were added to `test_prototype.py` covering these four cases so they don't regress silently.

@@ -90,6 +90,47 @@ class SafetySystemTests(unittest.TestCase):
         self.assertFalse(system.valve.physically_closed)
         self.assertIn("SAFE STATE NOT VERIFIED", "\n".join(system.events))
 
+    def test_reset_rejects_pressure_still_above_warning(self):
+        system = self.running_system()
+        system.sensor.pressure = 125
+        system.update()
+        system.reset()
+        self.assertEqual(system.state, State.LOCK)
+
+    def test_reset_accepts_pressure_back_in_range(self):
+        system = self.running_system()
+        system.sensor.pressure = 125
+        system.update()
+        system.sensor.pressure = 60
+        system.reset()
+        self.assertEqual(system.state, State.READY)
+        system.start()
+        self.assertEqual(system.state, State.FILLING)
+
+    def test_holding_estop_does_not_repeat_log_entries(self):
+        system = self.running_system()
+        system.e_stop = True
+        for _ in range(4):
+            system.update()
+        activations = [e for e in system.events if "Emergency stop activated" in e]
+        self.assertEqual(len(activations), 1)
+
+    def test_overpressure_log_has_no_duplicate_locked_line(self):
+        system = self.running_system()
+        system.sensor.pressure = EMERGENCY_PRESSURE
+        system.update()
+        locked_lines = [e for e in system.events if e.strip().endswith("System LOCKED")]
+        self.assertEqual(len(locked_lines), 0)
+
+    def test_valve_mismatch_during_filling_is_detected(self):
+        system = self.running_system()
+        system.valve.open_feedback = False
+        system.valve.closed_feedback = True
+        system.sensor.pressure = 50
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        self.assertIn("command/feedback mismatch", "\n".join(system.events))
+
     def test_fault_injection_engine_has_nine_scenarios(self):
         results = run_all_scenarios()
         self.assertEqual(len(results), 9)

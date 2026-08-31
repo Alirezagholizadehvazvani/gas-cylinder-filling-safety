@@ -60,6 +60,12 @@ class Valve:
     def physically_closed(self) -> bool:
         return not self.open_feedback and self.closed_feedback
 
+    @property
+    def matches_command(self) -> bool:
+        if self.open_command:
+            return self.open_feedback and not self.closed_feedback
+        return self.closed_feedback and not self.open_feedback
+
 
 @dataclass
 class PressureSensor:
@@ -131,6 +137,8 @@ class SafetySystem:
             self.lock("Watchdog failure")
         elif not self.sensor.healthy():
             self.lock("Pressure sensor fault")
+        elif self.sensor.read() >= WARNING_PRESSURE:
+            self.lock("Pressure still at or above warning threshold")
         else:
             if not self.valve.physically_closed:
                 self.valve.close()
@@ -189,6 +197,10 @@ class SafetySystem:
         if self.state not in (State.FILLING, State.WARNING):
             return
 
+        if not self.valve.matches_command:
+            self.lock("Valve fault - command/feedback mismatch")
+            return
+
         pressure = self.sensor.read()
 
         if pressure is None or not self.sensor.healthy():
@@ -243,10 +255,11 @@ class SafetySystem:
     def emergency_shutdown(self, pressure):
         self.state = State.EMERGENCY
         self.log(f"Emergency shutdown: {pressure:.1f} bar")
-        self._safe_shutdown("System LOCKED")
+        self._safe_shutdown("Emergency shutdown - filling disabled")
 
     def emergency_stop(self):
-        self._safe_shutdown("Emergency stop activated")
+        if self.state != State.LOCK:
+            self._safe_shutdown("Emergency stop activated")
 
     def power_failure(self):
         if self.state != State.LOCK:
