@@ -1,12 +1,22 @@
-import unittest
+"""Unit and regression tests for the digital safety prototype."""
 
-from prototype import SafetySystem, State, EMERGENCY_PRESSURE
-from fault_injection import run_all_scenarios
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "tools"))
+
+from safety_system import SafetySystem, State, EMERGENCY_PRESSURE  # noqa: E402
+from fault_injection import run_all_scenarios  # noqa: E402
 
 
 class SafetySystemTests(unittest.TestCase):
 
-    def running_system(self):
+    def running_system(self) -> SafetySystem:
         system = SafetySystem()
         system.power_on()
         system.start()
@@ -78,8 +88,12 @@ class SafetySystemTests(unittest.TestCase):
         system.update()
         self.assertEqual(system.state, State.LOCK)
         self.assertFalse(system.valve.physically_closed)
-        self.assertIn("CLOSED confirmation timeout", "\n".join(system.events))
-        self.assertIn("SAFE STATE NOT VERIFIED", "\n".join(system.events))
+        self.assertTrue(
+            any("CLOSED confirmation timeout" in e for e in system.events)
+        )
+        self.assertTrue(
+            any("SAFE STATE NOT VERIFIED" in e for e in system.events)
+        )
 
     def test_valve_feedback_failure_is_exposed(self):
         system = self.running_system()
@@ -88,7 +102,9 @@ class SafetySystemTests(unittest.TestCase):
         system.update()
         self.assertEqual(system.state, State.LOCK)
         self.assertFalse(system.valve.physically_closed)
-        self.assertIn("SAFE STATE NOT VERIFIED", "\n".join(system.events))
+        self.assertTrue(
+            any("SAFE STATE NOT VERIFIED" in e for e in system.events)
+        )
 
     def test_reset_rejects_pressure_still_above_warning(self):
         system = self.running_system()
@@ -112,14 +128,20 @@ class SafetySystemTests(unittest.TestCase):
         system.e_stop = True
         for _ in range(4):
             system.update()
-        activations = [e for e in system.events if "Emergency stop activated" in e]
+        activations = [
+            e for e in system.events if "Emergency stop activated" in e
+        ]
         self.assertEqual(len(activations), 1)
 
     def test_overpressure_log_has_no_duplicate_locked_line(self):
         system = self.running_system()
         system.sensor.pressure = EMERGENCY_PRESSURE
         system.update()
-        locked_lines = [e for e in system.events if e.strip().endswith("System LOCKED")]
+        # Exact "System LOCKED" alone should not appear; we use the
+        # verified / not-verified variants.
+        locked_lines = [
+            e for e in system.events if e.strip().endswith("System LOCKED")
+        ]
         self.assertEqual(len(locked_lines), 0)
 
     def test_valve_mismatch_during_filling_is_detected(self):
@@ -129,12 +151,36 @@ class SafetySystemTests(unittest.TestCase):
         system.sensor.pressure = 50
         system.update()
         self.assertEqual(system.state, State.LOCK)
-        self.assertIn("command/feedback mismatch", "\n".join(system.events))
+        self.assertTrue(
+            any("command/feedback mismatch" in e for e in system.events)
+        )
 
     def test_fault_injection_engine_has_nine_scenarios(self):
         results = run_all_scenarios()
         self.assertEqual(len(results), 9)
         self.assertEqual([r.id for r in results], list(range(1, 10)))
+        self.assertTrue(all(r.passed for r in results))
+
+    def test_no_auto_restart_after_lock(self):
+        system = self.running_system()
+        system.sensor.pressure = EMERGENCY_PRESSURE
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        # Pressure drop alone must not reopen the path
+        system.sensor.pressure = 50
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        system.start()
+        self.assertEqual(system.state, State.LOCK)
+
+    def test_warning_state_entered_at_120(self):
+        system = self.running_system()
+        system.sensor.pressure = 120.0
+        system.update()
+        self.assertEqual(system.state, State.WARNING)
+        system.sensor.pressure = 124.0
+        system.update()
+        self.assertEqual(system.state, State.WARNING)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+# Byte-compiled / cache
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,14 +10,26 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# Virtual environments
 .venv/
 venv/
 env/
+
+# IDE
 .idea/
 .vscode/
 *.swp
 *~
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Generated reports (keep sample; ignore local runs if desired)
+# reports/*.json
+# reports/*.txt
+
+# Secrets / local overrides
 .env
 *.local

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Fault Injection Engine
 ----------------------
@@ -15,11 +16,18 @@ Each scenario:
 This file never interfaces with real equipment.
 """
 
+from __future__ import annotations
+
+import json
+import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
-import json
 
-from prototype import SafetySystem, State, EMERGENCY_PRESSURE
+# Allow running from repo root without installation
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from safety_system import SafetySystem, State, EMERGENCY_PRESSURE  # noqa: E402
 
 
 @dataclass
@@ -75,8 +83,6 @@ def run_scenario(number: int) -> TestResult:
         injected = "Sensor value forced beyond 0..200 bar"
 
     elif number == 3:
-        # Establish a valid value, then freeze it while the underlying
-        # process value changes.
         system.sensor.pressure = 40.0
         system.update()
         system.sensor.frozen = True
@@ -121,13 +127,13 @@ def run_scenario(number: int) -> TestResult:
         raise ValueError("Scenario number must be 1..9")
 
     actual_closed = system.valve.physically_closed
+    # Valve actuator/feedback faults are expected to leave the valve
+    # unverified closed; the test PASSes when the controller correctly
+    # detects that condition and locks.
     expected_closed = False if number in (4, 5) else True
     expected_state = State.LOCK.value
     detected = has_lock_evidence(system)
 
-    # A test passes only when the controller reaches LOCK and the actuator
-    # is actually verified CLOSED. Valve-failure scenarios can therefore
-    # legitimately FAIL and expose an unsafe design condition.
     passed = (
         system.state.value == expected_state
         and actual_closed == expected_closed
@@ -150,13 +156,14 @@ def run_scenario(number: int) -> TestResult:
     )
 
 
-def run_all_scenarios():
+def run_all_scenarios() -> list[TestResult]:
     return [run_scenario(i) for i in range(1, 10)]
 
 
-def write_reports(results):
-    report_dir = Path("reports")
-    report_dir.mkdir(exist_ok=True)
+def write_reports(results: list[TestResult], report_dir: Path | None = None) -> dict:
+    if report_dir is None:
+        report_dir = ROOT / "reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
 
     passed = sum(r.passed for r in results)
     failed = len(results) - passed
@@ -189,30 +196,36 @@ def write_reports(results):
     ]
 
     for r in results:
-        lines.extend([
-            f"[{'PASS' if r.passed else 'FAIL'}] {r.id}. {r.scenario}",
-            f"  Injected : {r.injected_fault}",
-            f"  State    : expected={r.expected_state}, actual={r.actual_state}",
-            f"  Valve    : expected={'FAULT/NOT VERIFIED' if r.id in (4, 5) else 'CLOSED'}, actual={'CLOSED' if r.actual_valve_closed else 'OPEN'}",
-            f"  Detected : {'YES' if r.fault_detected else 'NO'}",
-            f"  Evidence : {r.evidence}",
-            "",
-        ])
+        valve_label = (
+            "FAULT/NOT VERIFIED" if r.id in (4, 5) else "CLOSED"
+        )
+        lines.extend(
+            [
+                f"[{'PASS' if r.passed else 'FAIL'}] {r.id}. {r.scenario}",
+                f"  Injected : {r.injected_fault}",
+                f"  State    : expected={r.expected_state}, actual={r.actual_state}",
+                f"  Valve    : expected={valve_label}, "
+                f"actual={'CLOSED' if r.actual_valve_closed else 'OPEN'}",
+                f"  Detected : {'YES' if r.fault_detected else 'NO'}",
+                f"  Evidence : {r.evidence}",
+                "",
+            ]
+        )
 
-    lines.extend([
-        "Interpretation",
-        "-" * 38,
-        "PASS means the system reached LOCK and the valve was verified CLOSED.",
-        "FAIL means at least one safe-state requirement was not satisfied.",
-        "A valve actuator/feedback fault is intentionally allowed to fail the",
-        "verification: the test should expose that the requested safe position",
-        "could not be verified.",
-        "",
-        "Safety boundary",
-        "-" * 38,
-        "This is a digital logic simulation only. It must not be connected to",
-        "or used to control real gas equipment.",
-    ])
+    lines.extend(
+        [
+            "Interpretation",
+            "-" * 38,
+            "PASS means the system reached LOCK and the valve behaviour",
+            "matched the scenario expectation (verified CLOSED, or correctly",
+            "reported NOT VERIFIED for actuator/feedback faults).",
+            "",
+            "Safety boundary",
+            "-" * 38,
+            "This is a digital logic simulation only. It must not be connected",
+            "to or used to control real gas equipment.",
+        ]
+    )
 
     (report_dir / "fault_injection_report.txt").write_text(
         "\n".join(lines),
@@ -222,7 +235,7 @@ def write_reports(results):
     return payload
 
 
-if __name__ == "__main__":
+def main() -> None:
     results = run_all_scenarios()
     payload = write_reports(results)
 
@@ -236,3 +249,7 @@ if __name__ == "__main__":
         f"\nOverall: {payload['summary']['overall']} "
         f"({payload['summary']['passed']}/{payload['summary']['total']} passed)"
     )
+
+
+if __name__ == "__main__":
+    main()

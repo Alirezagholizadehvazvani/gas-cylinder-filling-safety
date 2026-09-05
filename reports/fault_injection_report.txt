@@ -12,73 +12,71 @@ Scenario results
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Self-check passed - READY | 12:04:51  Filling started | 12:04:51  FAULT: Pressure sensor fault | 12:04:51  System LOCKED
+  Evidence : 12:05:07  SELF_CHECK  Self-check passed - READY  state=READY | 12:05:07  START  Filling started  state=FILLING | 12:05:07  LOCK  FAULT: Pressure sensor fault  state=LOCK | 12:05:07  LOCK  System LOCKED  state=LOCK
 
 [PASS] 2. Sensor Invalid / Out of Range
   Injected : Sensor value forced beyond 0..200 bar
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Self-check passed - READY | 12:04:51  Filling started | 12:04:51  FAULT: Pressure sensor fault | 12:04:51  System LOCKED
+  Evidence : 12:05:07  SELF_CHECK  Self-check passed - READY  state=READY | 12:05:07  START  Filling started  state=FILLING | 12:05:07  LOCK  FAULT: Pressure sensor fault  state=LOCK | 12:05:07  LOCK  System LOCKED  state=LOCK
 
 [PASS] 3. Sensor Frozen
   Injected : Sensor output frozen while process pressure changes
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Self-check passed - READY | 12:04:51  Filling started | 12:04:51  FAULT: Pressure sensor fault | 12:04:51  System LOCKED
+  Evidence : 12:05:07  SELF_CHECK  Self-check passed - READY  state=READY | 12:05:07  START  Filling started  state=FILLING | 12:05:07  LOCK  FAULT: Pressure sensor fault  state=LOCK | 12:05:07  LOCK  System LOCKED  state=LOCK
 
 [PASS] 4. Valve Fails to Close
   Injected : Valve actuator prevented from reaching CLOSED
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=FAULT/NOT VERIFIED, actual=OPEN
   Detected : YES
-  Evidence : 12:04:51  Filling started | 12:04:51  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks | 12:04:51  Safety shutdown requested: Emergency stop activated | 12:04:51  System LOCKED - SAFE STATE NOT VERIFIED
+  Evidence : 12:05:07  START  Filling started  state=FILLING | 12:05:07  CRITICAL  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks  state=LOCK | 12:05:07  CRITICAL  Safety shutdown requested: Emergency stop activated  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE NOT VERIFIED  state=LOCK
 
 [PASS] 5. Valve Feedback Failure
   Injected : Valve feedback forced inconsistent with physical close
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=FAULT/NOT VERIFIED, actual=OPEN
   Detected : YES
-  Evidence : 12:04:51  Filling started | 12:04:51  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks | 12:04:51  Safety shutdown requested: Emergency stop activated | 12:04:51  System LOCKED - SAFE STATE NOT VERIFIED
+  Evidence : 12:05:07  START  Filling started  state=FILLING | 12:05:07  CRITICAL  CRITICAL FAULT: Valve CLOSED confirmation timeout after 2 ticks  state=LOCK | 12:05:07  CRITICAL  Safety shutdown requested: Emergency stop activated  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE NOT VERIFIED  state=LOCK
 
 [PASS] 6. Emergency Stop
   Injected : Emergency-stop input activated
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Filling started | 12:04:51  Valve CLOSED confirmation received at tick 1/2 | 12:04:51  Emergency stop activated | 12:04:51  System LOCKED - SAFE STATE VERIFIED
+  Evidence : 12:05:07  START  Filling started  state=FILLING | 12:05:07  INFO  Valve CLOSED confirmation received at tick 1/2  state=FILLING | 12:05:07  LOCK  Emergency stop activated  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE VERIFIED  state=LOCK
 
 [PASS] 7. Power Failure
   Injected : Power availability removed
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Filling started | 12:04:51  Valve CLOSED confirmation received at tick 1/2 | 12:04:51  Power failure - filling disabled | 12:04:51  System LOCKED - SAFE STATE VERIFIED
+  Evidence : 12:05:07  START  Filling started  state=FILLING | 12:05:07  INFO  Valve CLOSED confirmation received at tick 1/2  state=FILLING | 12:05:07  LOCK  Power failure - filling disabled  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE VERIFIED  state=LOCK
 
 [PASS] 8. Controller / Watchdog Failure
   Injected : Controller watchdog expired
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Filling started | 12:04:51  Valve CLOSED confirmation received at tick 1/2 | 12:04:51  Watchdog failure - filling disabled | 12:04:51  System LOCKED - SAFE STATE VERIFIED
+  Evidence : 12:05:07  START  Filling started  state=FILLING | 12:05:07  INFO  Valve CLOSED confirmation received at tick 1/2  state=FILLING | 12:05:07  LOCK  Watchdog failure - filling disabled  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE VERIFIED  state=LOCK
 
 [PASS] 9. Overpressure
   Injected : Pressure forced to emergency threshold (125.0 bar)
   State    : expected=LOCK, actual=LOCK
   Valve    : expected=CLOSED, actual=CLOSED
   Detected : YES
-  Evidence : 12:04:51  Emergency shutdown: 125.0 bar | 12:04:51  Valve CLOSED confirmation received at tick 1/2 | 12:04:51  Emergency shutdown - filling disabled | 12:04:51  System LOCKED - SAFE STATE VERIFIED
+  Evidence : 12:05:07  EMERGENCY  Emergency shutdown: 125.0 bar  state=EMERGENCY  P=125.0 | 12:05:07  INFO  Valve CLOSED confirmation received at tick 1/2  state=EMERGENCY | 12:05:07  LOCK  Emergency shutdown - filling disabled  state=LOCK | 12:05:07  LOCK  System LOCKED - SAFE STATE VERIFIED  state=LOCK
 
 Interpretation
 --------------------------------------
-PASS means the system reached LOCK and the valve was verified CLOSED.
-FAIL means at least one safe-state requirement was not satisfied.
-A valve actuator/feedback fault is intentionally allowed to fail the
-verification: the test should expose that the requested safe position
-could not be verified.
+PASS means the system reached LOCK and the valve behaviour
+matched the scenario expectation (verified CLOSED, or correctly
+reported NOT VERIFIED for actuator/feedback faults).
 
 Safety boundary
 --------------------------------------
-This is a digital logic simulation only. It must not be connected to
-or used to control real gas equipment.
+This is a digital logic simulation only. It must not be connected
+to or used to control real gas equipment.

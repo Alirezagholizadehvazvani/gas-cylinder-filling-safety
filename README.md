@@ -1,103 +1,113 @@
 # Gas Cylinder Filling Safety System — Digital Prototype
 
-## Fault Injection Engine
+[![CI](https://github.com/YOUR_USERNAME/gas-cylinder-filling-safety/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/gas-cylinder-filling-safety/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This phase extends the original control/safety simulation with a **Fault Injection Engine** for digital verification of safe-state behaviour.
+**Digital logic simulation of a safety-oriented control system for an O₂/N₂ cylinder filling process.**
 
-The valve shutdown path now uses an explicit, bounded verification sequence:
-`CLOSE command → feedback/position verification → timeout → critical fault if not verified → LOCK`.
+This repository demonstrates the safety architecture, state machine, fault handling, and automated fault-injection verification that precede any physical high-pressure integration. It is a **logic prototype only** and must not control real gas equipment.
 
-The original prototype already covered startup/self-check, READY/FILLING/WARNING/EMERGENCY/LOCK, pressure thresholds, sensor faults, emergency stop, power failure, valve command/feedback modelling, reset behaviour and event logging. The README also explicitly defines the project as a logic simulation that must not be connected to real gas equipment.
+---
 
-This phase adds nine intentional fault scenarios, an automated test runner, and machine-readable/human-readable PASS/FAIL reports.
+## Problem
 
-## Fault scenarios
+Cylinder filling shops handle high-pressure oxygen and nitrogen. Uncontrolled overpressure, sensor failure, valve failure, or controller faults can create critical hazards. The design goal is a fail-safe electronic safety layer that:
 
-1. Sensor Disconnect
-2. Sensor Invalid / Out of Range
-3. Sensor Frozen
-4. Valve Fails to Close
-5. Valve Feedback Failure
-6. Emergency Stop
-7. Power Failure
-8. Controller / Watchdog Failure
-9. Overpressure
-10. Automated execution of all scenarios
-11. PASS/FAIL report generation
+- continuously monitors pressure,
+- warns at a company-approved target (120 bar),
+- forces emergency shutdown at ≥125 bar,
+- detects sensor, valve, power, and controller faults,
+- locks the system with no automatic restart,
+- works alongside independent mechanical (relief valve) and visual (ramp gauge) protection.
 
-## Safe-state definition
+## What this repository contains
 
-For this digital prototype, a successful safety response requires:
+| Area | Content |
+|------|---------|
+| Safety state machine | POWER_ON → SELF_CHECK → READY → FILLING / WARNING → LOCK |
+| Pressure decision logic | 120 bar warning, ≥125 bar emergency shutdown |
+| Sensor fault model | Disconnect, invalid/out-of-range, frozen signal |
+| Valve model | Command/feedback, fail-to-close, feedback lie, close-verification timeout |
+| Fault injection engine | 9 automated scenarios with PASS/FAIL reports |
+| Unit tests | 18+ regression tests covering SRS-relevant behaviours |
+| Documentation | Architecture, state machine, SRS→test traceability, safety boundary |
 
-- controller state reaches `LOCK`
-- the shutdown/fault is detected and recorded
-- for normal shutdowns, the valve is verified `CLOSED` within the configured timeout
-- for valve actuator/feedback faults, the system must detect that `CLOSED` cannot be verified and must remain `LOCKED`
+## Defense-in-depth (summary)
 
-This is deliberately stricter than merely checking the controller state. The controller must not falsely claim a safe state when valve position cannot be verified. Therefore scenarios 4 and 5 now PASS when the system correctly detects the valve problem, records a confirmation timeout, enters `LOCK`, and explicitly records `SAFE STATE NOT VERIFIED`.
-
-## Run the prototype
-
-```bash
-python prototype.py
+```
+1. Mechanical relief valve     (passive, independent of electronics)
+2. Ramp gauge PG1              (visual, independent sensing path)
+3. Transducer + Safety Controller + Shutoff Valve   ← this prototype
+4. Physical E-Stop             (electromechanical, independent of software)
 ```
 
-## Run the unit tests
+Only layers 3 and the E-Stop input of layer 4 are simulated digitally.
+
+## Quick start
 
 ```bash
-python -m unittest test_prototype.py -v
+# From repository root
+python -m pytest tests/ -v          # or: python -m unittest tests.test_prototype -v
+python -m safety_system             # short demo run
+python tools/fault_injection.py     # full fault-injection report → reports/
 ```
 
-## Run the complete Fault Injection Engine
+Requires Python 3.10+.
 
-```bash
-python fault_injection.py
+## Example fault-injection result
+
+```
+PASS 01 - Sensor Disconnect
+PASS 02 - Sensor Invalid / Out of Range
+PASS 03 - Sensor Frozen
+PASS 04 - Valve Fails to Close
+PASS 05 - Valve Feedback Failure
+PASS 06 - Emergency Stop
+PASS 07 - Power Failure
+PASS 08 - Controller / Watchdog Failure
+PASS 09 - Overpressure
+
+Overall: PASS (9/9 passed)
 ```
 
-The engine executes scenarios 1–9 automatically and writes:
+Scenarios 4 and 5 intentionally leave the valve **not verified closed**. The test passes when the controller correctly detects that condition, records a confirmation timeout, and remains LOCKED.
 
-- `reports/fault_injection_report.txt`
-- `reports/fault_injection_report.json`
+## Project structure
 
-## Important interpretation
+```
+gas-cylinder-filling-safety/
+├── src/safety_system/     # Core package (config, states, sensor, valve, controller, logging)
+├── tests/                 # Unit & regression tests
+├── tools/                 # Fault-injection engine
+├── docs/                  # Architecture, state machine, SRS traceability, safety boundary
+├── reports/               # Generated verification reports (sample included)
+└── .github/workflows/     # CI
+```
 
-A `FAIL` result is not automatically a bug in the test runner. It means the simulated safety requirement was not satisfied. For example, if a valve is injected with a "fail to close" fault, the controller may enter `LOCK` while the valve remains open; the report should then correctly identify the safe-state verification as failed.
+## Engineering decisions highlighted
+
+- **Bounded valve-close verification** — a CLOSE command is not trusted until feedback confirms CLOSED within a timeout; otherwise the system records `SAFE STATE NOT VERIFIED` and stays locked.
+- **No automatic restart** — pressure drop or power restore never re-opens the path; Reset + Start are required.
+- **Reset blocked while pressure elevated** — self-check rejects return to READY if pressure is still ≥ warning threshold.
+- **Continuous command/feedback monitoring** while filling, not only at the moment of CLOSE.
+- **Structured event log** with typed events for later analysis and SRS coverage.
 
 ## Safety boundary
 
-**This is a digital logic simulation only. It is not connected to, and must not directly control, real gas equipment.**
+This is a **digital logic simulation only**. It must not be connected to or used to control real high-pressure gas equipment. The setpoints used here are project documentation values, not certified limits. See [docs/safety_boundary.md](docs/safety_boundary.md).
 
+## Documentation
 
-## Valve shutdown verification
+- [Architecture](docs/architecture.md)
+- [State machine](docs/state_machine.md)
+- [SRS → test traceability](docs/srs_traceability.md)
+- [Safety boundary](docs/safety_boundary.md)
 
-The digital prototype now models a bounded valve-close confirmation window using `VALVE_CLOSE_TIMEOUT_TICKS`.
+## Status
 
-Normal shutdown:
+Digital prototype / simulation stage. Component selection, physical prototype, and real-equipment integration are future project stages and are outside this repository.
 
-```text
-CLOSE COMMAND
-     ↓
-Verify CLOSED
-     ↓
-within timeout?
-  ┌──┴──┐
- YES    NO
-  ↓      ↓
-LOCK   CRITICAL FAULT
-SAFE     ↓
-STATE   LOCK
-VERIFIED
-```
+## License
 
-The valve actuator and feedback fault scenarios deliberately exercise the `NO` branch. A test is considered successful when the system **detects and contains** that failure rather than pretending that the valve reached the safe position.
-
-## Fixes in this revision
-
-| Area | Problem | Fix |
-|---|---|---|
-| Reset | `self_check()` verified sensor health but not the pressure value, so reset after an overpressure lock could return to READY, and a following `start()` would reopen the valve, while pressure was still at/above 125 bar. | `self_check()` now also rejects reset while pressure is at or above `WARNING_PRESSURE`. |
-| E-stop | `emergency_stop()` had no re-entry guard, unlike `power_failure()` and `watchdog_failure()`. Holding E-stop across multiple `update()` ticks re-ran the shutdown and duplicated log lines every tick. | Added the same `if self.state != State.LOCK` guard used by the other two fault handlers. |
-| Logging | `emergency_shutdown()` passed the literal string `"System LOCKED"` as the shutdown reason, which collided with `_verify_valve_closed()`'s own confirmation line and produced a redundant duplicate entry in the log. | Reason changed to `"Emergency shutdown - filling disabled"`, consistent with how the other shutdown paths name their reason. |
-| Valve monitoring | Command/feedback mismatch was only checked when a CLOSE was issued. A valve that silently reported the wrong feedback while FILLING or WARNING was not caught. | `Valve.matches_command` checked every tick while FILLING/WARNING; a mismatch now locks immediately. |
-
-Five regression tests were added to `test_prototype.py` covering these four cases so they don't regress silently.
+MIT — see [LICENSE](LICENSE).
