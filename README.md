@@ -33,6 +33,13 @@ Cylinder filling shops handle high-pressure oxygen and nitrogen. Uncontrolled ov
 | Unit tests | 23 regression tests covering SRS-relevant behaviours |
 | Documentation | Architecture, state machine, SRS→test traceability, safety boundary |
 
+## Design documents
+
+The full engineering design — process description, hazard analysis,
+SRS, defense-in-depth architecture, and the T-01 to T-17 digital
+safety test plan this code is verified against — is in
+[`design/`](design/).
+
 ## Defense-in-depth (summary)
 
 ```
