@@ -182,6 +182,48 @@ class SafetySystemTests(unittest.TestCase):
         system.update()
         self.assertEqual(system.state, State.WARNING)
 
+    def test_pressure_below_warning_stays_filling(self):
+        system = self.running_system()
+        system.sensor.pressure = 119.0
+        system.update()
+        self.assertEqual(system.state, State.FILLING)
+
+    def test_pressure_spike_direct_to_emergency_is_caught(self):
+        system = self.running_system()
+        system.sensor.pressure = 40.0
+        system.update()
+        self.assertEqual(system.state, State.FILLING)
+        system.sensor.pressure = 130.0
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        self.assertTrue(system.valve.physically_closed)
+
+    def test_start_rejected_before_power_on(self):
+        system = SafetySystem()
+        system.start()
+        self.assertNotEqual(system.state, State.FILLING)
+
+    def test_start_rejected_after_invalid_startup(self):
+        system = SafetySystem()
+        system.e_stop = True
+        system.power_on()
+        self.assertEqual(system.state, State.LOCK)
+        system.start()
+        self.assertEqual(system.state, State.LOCK)
+
+    def test_power_restore_requires_reset_not_automatic(self):
+        system = self.running_system()
+        system.power_available = False
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        system.power_available = True
+        system.update()
+        self.assertEqual(system.state, State.LOCK)
+        system.reset()
+        self.assertEqual(system.state, State.READY)
+        system.start()
+        self.assertEqual(system.state, State.FILLING)
+
 
 if __name__ == "__main__":
     unittest.main()

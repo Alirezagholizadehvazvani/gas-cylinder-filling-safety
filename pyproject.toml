@@ -9,7 +9,7 @@ description = "Digital safety logic prototype for an O2/N2 cylinder filling cont
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Project Author" }]
+authors = [{ name = "Alireza Gholizadeh Vazvani" }]
 keywords = ["safety", "control-system", "fault-injection", "simulation", "industrial"]
 classifiers = [
     "Development Status :: 3 - Alpha",

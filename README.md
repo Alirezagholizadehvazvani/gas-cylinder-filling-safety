@@ -1,6 +1,6 @@
 # Gas Cylinder Filling Safety System — Digital Prototype
 
-[![CI](https://github.com/YOUR_USERNAME/gas-cylinder-filling-safety/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/gas-cylinder-filling-safety/actions/workflows/ci.yml)
+[![CI](https://github.com/Alirezagholizadehvazvani/gas-cylinder-filling-safety/actions/workflows/ci.yml/badge.svg)](https://github.com/Alirezagholizadehvazvani/gas-cylinder-filling-safety/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -30,7 +30,7 @@ Cylinder filling shops handle high-pressure oxygen and nitrogen. Uncontrolled ov
 | Sensor fault model | Disconnect, invalid/out-of-range, frozen signal |
 | Valve model | Command/feedback, fail-to-close, feedback lie, close-verification timeout |
 | Fault injection engine | 9 automated scenarios with PASS/FAIL reports |
-| Unit tests | 18+ regression tests covering SRS-relevant behaviours |
+| Unit tests | 23 regression tests covering SRS-relevant behaviours |
 | Documentation | Architecture, state machine, SRS→test traceability, safety boundary |
 
 ## Defense-in-depth (summary)
